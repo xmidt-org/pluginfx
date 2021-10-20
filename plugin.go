@@ -2,7 +2,6 @@ package pluginfx
 
 import (
 	"fmt"
-	"plugin"
 	"reflect"
 
 	"go.uber.org/fx"
@@ -118,28 +117,28 @@ func (pl Plugin) appendLifecycle(s Symbols, options []fx.Option) []fx.Option {
 //   )
 func (pl Plugin) Provide() fx.Option {
 	var options []fx.Option
-	p, err := plugin.Open(pl.Path)
+	symbols, err := Open(pl.Path)
 
-	if err != nil {
-		err = fmt.Errorf("Unable to load plugin from path %s: %s", pl.Path, err)
-	} else {
-		options = pl.appendConstructors(p, options)
-		options = pl.appendLifecycle(p, options)
+	if err == nil {
+		options = pl.appendConstructors(symbols, options)
+		options = pl.appendLifecycle(symbols, options)
 	}
 
+	// emit the plugin as a component if desired, even when there's an error.
+	// this lets the fx.App produce useful error messages.
 	switch {
 	case !pl.Anonymous && (len(pl.Name) > 0 || len(pl.Group) > 0):
 		options = append(options, fx.Provide(
 			fx.Annotated{
 				Name:   pl.Name,
 				Group:  pl.Group,
-				Target: func() (Symbols, error) { return p, err },
+				Target: func() (Symbols, error) { return symbols, err },
 			},
 		))
 
 	case !pl.Anonymous:
 		options = append(options, fx.Provide(
-			func() (Symbols, error) { return p, err },
+			func() (Symbols, error) { return symbols, err },
 		))
 
 	case err != nil:
