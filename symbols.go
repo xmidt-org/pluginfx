@@ -104,6 +104,31 @@ func Lookup(s Symbols, name string) (interface{}, error) {
 	return value, err
 }
 
+// Find attempts to locate a symbol in any of a set of Symbols objects.  Any Symbols
+// object that is nil is skipped, which simplifies error handling.
+//
+// The Symbols are consulted in order, and the first one to return a symbol
+// is returned.  If name was not found in any of the Symbols, *MissingSymbolError
+// is returned.
+//
+// The primary use case for this function is for defaults:
+//
+//   var sm pluginfx.SymbolMap
+//   sm.SetValue("port", 8080)
+//   p, _ := pluginfx.Open("path.so")
+//   v, err := Find("port", p, sm) // fallback to the symbol map if not in the plugin
+func Find(name string, s ...Symbols) (interface{}, error) {
+	for _, symbols := range s {
+		if symbols != nil {
+			if v, err := symbols.Lookup(name); err == nil {
+				return v, nil
+			}
+		}
+	}
+
+	return nil, &MissingSymbolError{Name: name}
+}
+
 // isValidConstructor requires its argument to be a function with at least (1) non-error
 // output parameter.
 func isValidConstructor(value reflect.Value) bool {
