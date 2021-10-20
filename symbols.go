@@ -22,11 +22,8 @@ func (pe *PluginError) Error() string {
 	return fmt.Sprintf("Unable to load plugin from path %s: %s", pe.Path, pe.Err)
 }
 
-// MissingSymbolError indicates that a symbol was not found.
-//
-// *plugin.Plugin does not return this error.  It returns a generated
-// using fmt.Errorf.  This package's code normalizes these errors
-// to errors of this type.
+// MissingSymbolError indicates that a symbol was not found.  This error is returned
+// by Lookup to normalize errors coming from plugins.
 type MissingSymbolError struct {
 	Name string
 	Err  error
