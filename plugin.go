@@ -186,6 +186,9 @@ type Set struct {
 	OnStop string
 }
 
+// Provide opens a list of plugins described in the Paths field.  These plugins are optionally
+// put into a value group if the Group field is set.  Each plugin is then examined for symbols
+// to provide to the enclosing fx.App in a manner similar to Plugin.Provide.
 func (s Set) Provide() fx.Option {
 	var options []fx.Option
 	for _, path := range s.Paths {
