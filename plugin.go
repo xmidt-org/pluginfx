@@ -81,7 +81,7 @@ func (pl Plugin) appendLifecycle(s Symbols, options []fx.Option) []fx.Option {
 	if len(pl.OnStart) > 0 {
 		var err error
 		hook.OnStart, err = LookupLifecycle(s, pl.OnStart)
-		if err != nil {
+		if !pl.IgnoreMissingLifecycle && err != nil {
 			options = append(options, fx.Error(err))
 		}
 	}
@@ -89,7 +89,7 @@ func (pl Plugin) appendLifecycle(s Symbols, options []fx.Option) []fx.Option {
 	if len(pl.OnStop) > 0 {
 		var err error
 		hook.OnStop, err = LookupLifecycle(s, pl.OnStop)
-		if err != nil {
+		if !pl.IgnoreMissingLifecycle && err != nil {
 			options = append(options, fx.Error(err))
 		}
 	}
