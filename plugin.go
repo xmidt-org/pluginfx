@@ -151,3 +151,60 @@ func (pl Plugin) Provide() fx.Option {
 
 	return fx.Options(options...)
 }
+
+// Set describes how to load multiple plugins as a bundle and integrate each of them
+// into an enclosing fx.App.
+type Set struct {
+	// Group is the optional value group to place each plugin in this set into.  If this
+	// field is unset, the loaded plugins are not added as components.
+	Group string
+
+	// Paths are the plugin paths to load.
+	Paths []string
+
+	// IgnoreMissingConstructors controls what happens if a symbol in the Constructors
+	// field is not present in any of the plugins.  If this field is true, missing constructor
+	// symbols are silently ignored.  Otherwise, missing constructor symbols will shortcircuit
+	// application startup with one or more errors.
+	IgnoreMissingConstructors bool
+
+	// Constructors are the optional exported functions from each plugin that participate
+	// in dependency injection.  Each constructor is passed to fx.Provide.
+	Constructors []string
+
+	// IgnoreMissingLifecycle controls what happens if OnStart or OnStop are not symbols
+	// in each plugin.  If this field is true and either OnStart or OnStop are not present,
+	// no error is raised.  Otherwise, application startup is shortcircuited with one or
+	// more errors.
+	IgnoreMissingLifecycle bool
+
+	// OnStart is the optional exported function that should be called when the enclosing
+	// application is started.
+	OnStart string
+
+	// OnStop is the optional exported function that should be called when the enclosing
+	// application is stopped.
+	OnStop string
+}
+
+func (s Set) Provide() fx.Option {
+	var options []fx.Option
+	for _, path := range s.Paths {
+		options = append(options,
+			Plugin{
+				Group:     s.Group,
+				Anonymous: len(s.Group) == 0,
+				Path:      path,
+
+				IgnoreMissingConstructors: s.IgnoreMissingConstructors,
+				Constructors:              s.Constructors,
+
+				IgnoreMissingLifecycle: s.IgnoreMissingLifecycle,
+				OnStart:                s.OnStart,
+				OnStop:                 s.OnStop,
+			}.Provide(),
+		)
+	}
+
+	return fx.Options(options...)
+}
