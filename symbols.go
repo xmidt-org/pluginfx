@@ -41,17 +41,6 @@ func (mse *MissingSymbolError) Error() string {
 	return fmt.Sprintf("Missing symbol %s", mse.Name)
 }
 
-// InvalidConstructorError indicates that a symbol was not usable
-// as an uber/fx constructor.
-type InvalidConstructorError struct {
-	Name string
-	Type reflect.Type
-}
-
-func (ice *InvalidConstructorError) Error() string {
-	return fmt.Sprintf("Symbol %s of type %T is not a valid constructor", ice.Name, ice.Type)
-}
-
 // InvalidLifecycleError indicates that a symbol was not usable
 // as an uber/fx lifecycle callback via fx.Hook.
 type InvalidLifecycleError struct {
@@ -127,55 +116,6 @@ func Find(name string, s ...Symbols) (interface{}, error) {
 	}
 
 	return nil, &MissingSymbolError{Name: name}
-}
-
-// isValidConstructor requires its argument to be a function with at least (1) non-error
-// output parameter.
-func isValidConstructor(value reflect.Value) bool {
-	// easy case:
-	if value.Kind() != reflect.Func || value.Type().NumOut() < 1 {
-		return false
-	}
-
-	errType := reflect.TypeOf((*error)(nil)).Elem()
-	vt := value.Type()
-	for i := 0; i < vt.NumOut(); i++ {
-		if vt.In(i) != errType {
-			// first non-error output parameter means we're good
-			return true
-		}
-	}
-
-	return false
-}
-
-func checkConstructorSymbol(name string, value reflect.Value) error {
-	if !isValidConstructor(value) {
-		return &InvalidConstructorError{
-			Name: name,
-			Type: value.Type(),
-		}
-	}
-
-	return nil
-}
-
-// LookupConstructor loads a symbol and verifies that it can be used as
-// a constructor passed to fx.Provide.  The reflect.Value representing
-// the function is returned along with any error.
-//
-// This function returns a *MissingSymbolError if name was not found.
-// It returns *InvalidConstructorError if the symbol was found but it
-// not a valid fx constructor.
-func LookupConstructor(s Symbols, name string) (reflect.Value, error) {
-	var value reflect.Value
-	symbol, err := Lookup(s, name)
-	if err == nil {
-		value = reflect.ValueOf(symbol)
-		err = checkConstructorSymbol(name, value)
-	}
-
-	return value, err
 }
 
 // LookupLifecycle loads a symbol that is assumed to be a lifecycle callback

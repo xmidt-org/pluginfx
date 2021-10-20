@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 - Normalized error handling for plugin.Open and Plugin.Lookup
 - Support for symbol defaults and searching over multiple plugins
+- Improved support for constructors and targets
 
 ## [v0.0.1]
 - Initial creation

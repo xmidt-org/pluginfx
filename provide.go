@@ -1,9 +1,6 @@
 package pluginfx
 
 import (
-	"fmt"
-	"reflect"
-
 	"go.uber.org/fx"
 )
 
@@ -34,7 +31,12 @@ type Plugin struct {
 
 	// Constructors are the optional exported functions from the plugin that participate
 	// in dependency injection.  Each constructor is passed to fx.Provide.
-	Constructors []string
+	//
+	// Each element of this slice must either by a string or an Annotated.  If a string,
+	// it is the name of a function within the plugin.  If an Annotated, the Annotated.Constructor
+	// field is the symbol and the Name and Group fields give control over how
+	// the constructor's product is placed into the enclosing fx.App.
+	Constructors Constructors
 
 	// IgnoreMissingLifecycle controls what happens if OnStart or OnStop are not symbols
 	// in the plugin.  If this field is true and either OnStart or OnStop are not present,
@@ -49,30 +51,6 @@ type Plugin struct {
 	// OnStop is the optional exported function that should be called when the enclosing
 	// application is stopped.
 	OnStop string
-}
-
-func (pl Plugin) appendConstructors(s Symbols, options []fx.Option) []fx.Option {
-	EachSymbol(
-		s,
-		func(name string, value reflect.Value, lookupErr error) error {
-			if lookupErr != nil {
-				if !pl.IgnoreMissingConstructors {
-					options = append(options, fx.Error(
-						fmt.Errorf("Unable to load constructor: %s", lookupErr),
-					))
-				}
-			} else if err := checkConstructorSymbol(name, value); err != nil {
-				options = append(options, fx.Error(err))
-			} else {
-				options = append(options, fx.Provide(value.Interface()))
-			}
-
-			return nil
-		},
-		pl.Constructors...,
-	)
-
-	return options
 }
 
 func (pl Plugin) appendLifecycle(s Symbols, options []fx.Option) []fx.Option {
@@ -110,7 +88,8 @@ func (pl Plugin) appendLifecycle(s Symbols, options []fx.Option) []fx.Option {
 //   app := fx.New(
 //     pluginx.Plugin{
 //       Path: "/etc/lib/something.so",
-//       Constructors: []string{"ProvideSomething", "NewSomethingElse"},
+//       Constructors: pluginfx.Constructors {
+//       },
 //       OnStart: "Initialize",
 //       /* other fields filled out as desired */
 //     }.Provide()
@@ -120,7 +99,7 @@ func (pl Plugin) Provide() fx.Option {
 	symbols, err := Open(pl.Path)
 
 	if err == nil {
-		options = pl.appendConstructors(symbols, options)
+		options = append(options, pl.Constructors.Provide(symbols))
 		options = pl.appendLifecycle(symbols, options)
 	}
 
@@ -169,7 +148,7 @@ type Set struct {
 
 	// Constructors are the optional exported functions from each plugin that participate
 	// in dependency injection.  Each constructor is passed to fx.Provide.
-	Constructors []string
+	Constructors Constructors
 
 	// IgnoreMissingLifecycle controls what happens if OnStart or OnStop are not symbols
 	// in each plugin.  If this field is true and either OnStart or OnStop are not present,
