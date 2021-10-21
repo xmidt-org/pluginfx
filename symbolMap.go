@@ -8,33 +8,19 @@ import (
 // SymbolMap is a map implementation of Symbols.  It allows for an in-memory
 // implementation of a plugin for testing or for production defaults.
 //
-// The zero value of this type is a usable, empty "plugin".
-type SymbolMap map[string]plugin.Symbol
-
-func (sm *SymbolMap) set(name string, value plugin.Symbol) {
-	if *sm == nil {
-		*sm = make(SymbolMap)
-	}
-
-	(*sm)[name] = value
+// The zero value of this type is a usable, empty "plugin".  An existing
+// map may be copied into a new *SymbolMap by using NewSymbolMap.
+type SymbolMap struct {
+	symbols map[string]plugin.Symbol
 }
 
-// Set establishes a symbol, overwriting any existing symbol with the given name.
-// This method panics if value is not a function or a non-nil pointer, which are the
-// only allowed types of symbols in an actual plugin.
-func (sm *SymbolMap) Set(name string, value plugin.Symbol) {
-	vv := reflect.ValueOf(value)
-	if vv.Kind() != reflect.Func && (vv.Kind() != reflect.Ptr || vv.IsNil()) {
-		panic("pluginfx.SymbolMap: A symbol must be either a function or a non-nil pointer")
-	}
-
-	sm.set(name, value)
-}
-
-// SetValue is similar to Set, but does not panic if value is not a function or
-// a pointer.  Instead, in that case this method creates a pointer to the value
-// and use that pointer as the value.  This method will still panic if value is a nil pointer, however.
-func (sm *SymbolMap) SetValue(name string, value interface{}) {
+// Set adds a symbol to this map.  The value may not be a nil pointer,
+// or this method panics.
+//
+// If value is a function or a non-nil pointer, it is added to this map as is.
+// Otherwise, a pointer is created that points to value, and that pointer is added
+// to this map.
+func (sm *SymbolMap) Set(name string, value interface{}) {
 	vv := reflect.ValueOf(value)
 	if vv.Kind() == reflect.Ptr {
 		if vv.IsNil() {
@@ -46,22 +32,35 @@ func (sm *SymbolMap) SetValue(name string, value interface{}) {
 		value = newValue.Interface()
 	}
 
-	sm.set(name, value)
+	if sm.symbols == nil {
+		sm.symbols = make(map[string]plugin.Symbol)
+	}
+
+	sm.symbols[name] = value
 }
 
 // Del removes a symbol from this map.
 func (sm *SymbolMap) Del(name string) {
-	if *sm != nil {
-		delete(*sm, name)
+	if sm.symbols != nil {
+		delete(sm.symbols, name)
 	}
 }
 
 // Lookup implements the Symbols interface.
 func (sm SymbolMap) Lookup(name string) (plugin.Symbol, error) {
-	if s, ok := sm[name]; ok {
+	if s, ok := sm.symbols[name]; ok {
 		return s, nil
 	} else {
 		// mimic the error returned by the plugin package
 		return nil, &MissingSymbolError{Name: name}
 	}
+}
+
+func NewSymbolMap(m map[string]interface{}) *SymbolMap {
+	sm := new(SymbolMap)
+	for k, v := range m {
+		sm.Set(k, v)
+	}
+
+	return sm
 }
