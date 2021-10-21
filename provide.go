@@ -23,12 +23,6 @@ type Plugin struct {
 	// Path is the plugin's path.  This field is required.
 	Path string
 
-	// IgnoreMissingConstructors controls what happens if a symbol in the Constructors
-	// field is not present in the plugin.  If this field is true, missing constructor
-	// symbols are silently ignored.  Otherwise, missing constructor symbols will shortcircuit
-	// application startup with one or more errors.
-	IgnoreMissingConstructors bool
-
 	// Constructors are the optional exported functions from the plugin that participate
 	// in dependency injection.  Each constructor is passed to fx.Provide.
 	//
@@ -38,46 +32,9 @@ type Plugin struct {
 	// the constructor's product is placed into the enclosing fx.App.
 	Constructors Constructors
 
-	// IgnoreMissingLifecycle controls what happens if OnStart or OnStop are not symbols
-	// in the plugin.  If this field is true and either OnStart or OnStop are not present,
-	// no error is raised.  Otherwise, application startup is shortcircuited with one or
-	// more errors.
-	IgnoreMissingLifecycle bool
-
-	// OnStart is the optional exported function that should be called when the enclosing
-	// application is started.
-	OnStart string
-
-	// OnStop is the optional exported function that should be called when the enclosing
-	// application is stopped.
-	OnStop string
-}
-
-func (pl Plugin) appendLifecycle(s Symbols, options []fx.Option) []fx.Option {
-	var hook fx.Hook
-	if len(pl.OnStart) > 0 {
-		var err error
-		hook.OnStart, err = LookupLifecycle(s, pl.OnStart)
-		if !pl.IgnoreMissingLifecycle && err != nil {
-			options = append(options, fx.Error(err))
-		}
-	}
-
-	if len(pl.OnStop) > 0 {
-		var err error
-		hook.OnStop, err = LookupLifecycle(s, pl.OnStop)
-		if !pl.IgnoreMissingLifecycle && err != nil {
-			options = append(options, fx.Error(err))
-		}
-	}
-
-	if hook.OnStart != nil || hook.OnStop != nil {
-		options = append(options, fx.Invoke(
-			func(l fx.Lifecycle) { l.Append(hook) },
-		))
-	}
-
-	return options
+	// Lifecycle is the optional binding from a plugin's symbols to the enclosing
+	// application.
+	Lifecycle Lifecycle
 }
 
 // Provide builds the appropriate options to integrate this plugin into an
@@ -100,7 +57,7 @@ func (pl Plugin) Provide() fx.Option {
 
 	if err == nil {
 		options = append(options, pl.Constructors.Provide(symbols))
-		options = pl.appendLifecycle(symbols, options)
+		options = append(options, pl.Lifecycle.Provide(symbols))
 	}
 
 	// emit the plugin as a component if desired, even when there's an error.
@@ -140,29 +97,9 @@ type Set struct {
 	// Paths are the plugin paths to load.
 	Paths []string
 
-	// IgnoreMissingConstructors controls what happens if a symbol in the Constructors
-	// field is not present in any of the plugins.  If this field is true, missing constructor
-	// symbols are silently ignored.  Otherwise, missing constructor symbols will shortcircuit
-	// application startup with one or more errors.
-	IgnoreMissingConstructors bool
-
-	// Constructors are the optional exported functions from each plugin that participate
-	// in dependency injection.  Each constructor is passed to fx.Provide.
 	Constructors Constructors
 
-	// IgnoreMissingLifecycle controls what happens if OnStart or OnStop are not symbols
-	// in each plugin.  If this field is true and either OnStart or OnStop are not present,
-	// no error is raised.  Otherwise, application startup is shortcircuited with one or
-	// more errors.
-	IgnoreMissingLifecycle bool
-
-	// OnStart is the optional exported function that should be called when the enclosing
-	// application is started.
-	OnStart string
-
-	// OnStop is the optional exported function that should be called when the enclosing
-	// application is stopped.
-	OnStop string
+	Lifecycle Lifecycle
 }
 
 // Provide opens a list of plugins described in the Paths field.  These plugins are optionally
@@ -177,12 +114,8 @@ func (s Set) Provide() fx.Option {
 				Anonymous: len(s.Group) == 0,
 				Path:      path,
 
-				IgnoreMissingConstructors: s.IgnoreMissingConstructors,
-				Constructors:              s.Constructors,
-
-				IgnoreMissingLifecycle: s.IgnoreMissingLifecycle,
-				OnStart:                s.OnStart,
-				OnStop:                 s.OnStop,
+				Constructors: s.Constructors,
+				Lifecycle:    s.Lifecycle,
 			}.Provide(),
 		)
 	}
