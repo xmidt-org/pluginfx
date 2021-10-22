@@ -57,7 +57,10 @@ func (sm SymbolMap) Lookup(name string) (plugin.Symbol, error) {
 }
 
 func NewSymbolMap(m map[string]interface{}) *SymbolMap {
-	sm := new(SymbolMap)
+	sm := &SymbolMap{
+		symbols: make(map[string]plugin.Symbol, len(m)),
+	}
+
 	for k, v := range m {
 		sm.Set(k, v)
 	}
