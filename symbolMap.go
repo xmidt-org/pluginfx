@@ -47,7 +47,7 @@ func (sm *SymbolMap) Del(name string) {
 }
 
 // Lookup implements the Symbols interface.
-func (sm SymbolMap) Lookup(name string) (plugin.Symbol, error) {
+func (sm *SymbolMap) Lookup(name string) (plugin.Symbol, error) {
 	if s, ok := sm.symbols[name]; ok {
 		return s, nil
 	} else {
@@ -56,6 +56,8 @@ func (sm SymbolMap) Lookup(name string) (plugin.Symbol, error) {
 	}
 }
 
+// NewSymbolMap shallow copies the contents of a map onto a new
+// SymbolMap instance.  Each symbol value is handled with Set.
 func NewSymbolMap(m map[string]interface{}) *SymbolMap {
 	sm := &SymbolMap{
 		symbols: make(map[string]plugin.Symbol, len(m)),
