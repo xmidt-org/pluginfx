@@ -4,9 +4,9 @@ import (
 	"go.uber.org/fx"
 )
 
-// Plugin describes how to load a single plugin and integrate it into
+// P describes how to load a single plugin and integrate it into
 // an enclosing fx.App.
-type Plugin struct {
+type P struct {
 	// Name is the optional name of the plugin component within the application.  This
 	// field is ignored if Anonymous is set.
 	Name string
@@ -43,7 +43,7 @@ type Plugin struct {
 // Typical usage:
 //
 //   app := fx.New(
-//     pluginx.Plugin{
+//     pluginx.P{
 //       Path: "/etc/lib/something.so",
 //       Constructors: pluginfx.Constructors {
 //       },
@@ -51,30 +51,30 @@ type Plugin struct {
 //       /* other fields filled out as desired */
 //     }.Provide()
 //   )
-func (pl Plugin) Provide() fx.Option {
+func (p P) Provide() fx.Option {
 	var options []fx.Option
-	symbols, err := Open(pl.Path)
+	plugin, err := Open(p.Path)
 
 	if err == nil {
-		options = append(options, pl.Constructors.Provide(symbols))
-		options = append(options, pl.Lifecycle.Provide(symbols))
+		options = append(options, p.Constructors.Provide(plugin))
+		options = append(options, p.Lifecycle.Provide(plugin))
 	}
 
 	// emit the plugin as a component if desired, even when there's an error.
 	// this lets the fx.App produce useful error messages.
 	switch {
-	case !pl.Anonymous && (len(pl.Name) > 0 || len(pl.Group) > 0):
+	case !p.Anonymous && (len(p.Name) > 0 || len(p.Group) > 0):
 		options = append(options, fx.Provide(
 			fx.Annotated{
-				Name:   pl.Name,
-				Group:  pl.Group,
-				Target: func() (Symbols, error) { return symbols, err },
+				Name:   p.Name,
+				Group:  p.Group,
+				Target: func() (Plugin, error) { return plugin, err },
 			},
 		))
 
-	case !pl.Anonymous:
+	case !p.Anonymous:
 		options = append(options, fx.Provide(
-			func() (Symbols, error) { return symbols, err },
+			func() (Plugin, error) { return plugin, err },
 		))
 
 	case err != nil:
@@ -87,9 +87,9 @@ func (pl Plugin) Provide() fx.Option {
 	return fx.Options(options...)
 }
 
-// Set describes how to load multiple plugins as a bundle and integrate each of them
+// S describes how to load multiple plugins as a bundle and integrate each of them
 // into an enclosing fx.App.
-type Set struct {
+type S struct {
 	// Group is the optional value group to place each plugin in this set into.  If this
 	// field is unset, the loaded plugins are not added as components.
 	Group string
@@ -105,11 +105,11 @@ type Set struct {
 // Provide opens a list of plugins described in the Paths field.  These plugins are optionally
 // put into a value group if the Group field is set.  Each plugin is then examined for symbols
 // to provide to the enclosing fx.App in a manner similar to Plugin.Provide.
-func (s Set) Provide() fx.Option {
+func (s S) Provide() fx.Option {
 	var options []fx.Option
 	for _, path := range s.Paths {
 		options = append(options,
-			Plugin{
+			P{
 				Group:     s.Group,
 				Anonymous: len(s.Group) == 0,
 				Path:      path,

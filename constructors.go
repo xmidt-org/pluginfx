@@ -29,9 +29,9 @@ func (ice *InvalidConstructorError) Error() string {
 // This function returns a *MissingSymbolError if name was not found.
 // It returns *InvalidConstructorError if the symbol was found but it
 // not a valid fx constructor.
-func LookupConstructor(s Symbols, name string) (value reflect.Value, err error) {
+func LookupConstructor(p Plugin, name string) (value reflect.Value, err error) {
 	var symbol plugin.Symbol
-	symbol, err = Lookup(s, name)
+	symbol, err = Lookup(p, name)
 
 	if err == nil {
 		value = reflect.ValueOf(symbol)
@@ -68,7 +68,7 @@ func (ite *InvalidTargetError) Error() string {
 // LookupTarget locates a symbol that is valid for the fx.Annotated.Target field.
 // A Target is a Constructor with an additional constraint:  it my only return exactly
 // (1) non-error object and my optionally return an error in addition.
-func LookupTarget(s Symbols, name string) (value reflect.Value, err error) {
+func LookupTarget(s Plugin, name string) (value reflect.Value, err error) {
 	var symbol plugin.Symbol
 	symbol, err = Lookup(s, name)
 
@@ -117,7 +117,7 @@ type Annotated struct {
 // Constructors holds information about symbols within a plugin that are to
 // be used as fx.Provide functions.
 type Constructors struct {
-	// Symbols describe the constructor symbols to load.  Each element of this slice
+	// Plugin describe the constructor symbols to load.  Each element of this slice
 	// must be either a string or an Annotated.
 	//
 	// If an element is a string, it is taken to be the name of a constructor.  That constructor
@@ -128,17 +128,17 @@ type Constructors struct {
 	// fields.
 	//
 	// Any other type will shortcircuit application startup with an error.
-	Symbols []interface{}
+	Plugin []interface{}
 
-	// IgnoreMissing defines what happens when an element from the Symbols field is not found.
+	// IgnoreMissing defines what happens when an element from the Plugin field is not found.
 	// If this field is true, missing symbols are silently ignored.  If this field is false (unset),
 	// then any missing symbol will shortcircuit application startup with one or more errors.
 	IgnoreMissing bool
 }
 
-func (ctors Constructors) Provide(s Symbols) fx.Option {
+func (ctors Constructors) Provide(s Plugin) fx.Option {
 	var options []fx.Option
-	for _, v := range ctors.Symbols {
+	for _, v := range ctors.Plugin {
 		var (
 			f   reflect.Value
 			err error
@@ -164,7 +164,7 @@ func (ctors Constructors) Provide(s Symbols) fx.Option {
 			}
 
 		default:
-			err = fmt.Errorf("%T is not a valid type for Constructor.Symbols", v)
+			err = fmt.Errorf("%T is not a valid type for Constructor.Plugin", v)
 		}
 
 		missing := IsMissingSymbolError(err)

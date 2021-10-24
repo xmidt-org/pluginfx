@@ -35,7 +35,7 @@ func (ile *InvalidLifecycleError) Error() string {
 // This function returns a *MissingSymbolError if name was not found.
 // It returns *InvalidLifecycleError if the symbol was not a function with
 // one of the above signatures.
-func LookupLifecycle(s Symbols, name string) (func(context.Context) error, error) {
+func LookupLifecycle(s Plugin, name string) (func(context.Context) error, error) {
 	var callback func(context.Context) error
 	symbol, err := Lookup(s, name)
 
@@ -78,7 +78,7 @@ type Lifecycle struct {
 	IgnoreMissing bool
 }
 
-func (lc Lifecycle) Provide(s Symbols) fx.Option {
+func (lc Lifecycle) Provide(p Plugin) fx.Option {
 	var (
 		hook    fx.Hook
 		options []fx.Option
@@ -86,7 +86,7 @@ func (lc Lifecycle) Provide(s Symbols) fx.Option {
 
 	if len(lc.OnStart) > 0 {
 		var err error
-		hook.OnStart, err = LookupLifecycle(s, lc.OnStart)
+		hook.OnStart, err = LookupLifecycle(p, lc.OnStart)
 		missing := IsMissingSymbolError(err)
 		if (missing && !lc.IgnoreMissing) || (!missing && err != nil) {
 			options = append(options, fx.Error(err))
@@ -95,7 +95,7 @@ func (lc Lifecycle) Provide(s Symbols) fx.Option {
 
 	if len(lc.OnStop) > 0 {
 		var err error
-		hook.OnStop, err = LookupLifecycle(s, lc.OnStop)
+		hook.OnStop, err = LookupLifecycle(p, lc.OnStop)
 		missing := IsMissingSymbolError(err)
 		if (missing && !lc.IgnoreMissing) || (!missing && err != nil) {
 			options = append(options, fx.Error(err))
