@@ -68,13 +68,13 @@ func (p P) Provide() fx.Option {
 			fx.Annotated{
 				Name:   p.Name,
 				Group:  p.Group,
-				Target: func() (Symbols, error) { return plugin, err },
+				Target: func() (Plugin, error) { return plugin, err },
 			},
 		))
 
 	case !p.Anonymous:
 		options = append(options, fx.Provide(
-			func() (Symbols, error) { return plugin, err },
+			func() (Plugin, error) { return plugin, err },
 		))
 
 	case err != nil:

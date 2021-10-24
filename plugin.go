@@ -7,9 +7,9 @@ import (
 	"reflect"
 )
 
-// Symbols defines the behavior of something that can look up
+// Plugin defines the behavior of something that can look up
 // exported symbols.  *plugin.Plugin implements this interface.
-type Symbols interface {
+type Plugin interface {
 	// Lookup returns the value of the given symbol, or an error
 	// if no such symbol exists.
 	//
@@ -34,9 +34,9 @@ func (oe *OpenError) Error() string {
 	return fmt.Sprintf("Unable to load plugin from path %s: %s", oe.Path, oe.Err)
 }
 
-// Open loads a set of Symbols from a path.  This is the analog to plugin.Open,
+// Open loads a Plugin from a path.  This is the analog to plugin.Open,
 // and returns a *OpenError instead of a generated error.
-func Open(path string) (Symbols, error) {
+func Open(path string) (Plugin, error) {
 	p, err := plugin.Open(path)
 	if err != nil {
 		err = &OpenError{
@@ -74,9 +74,9 @@ func IsMissingSymbolError(err error) bool {
 }
 
 // Lookup invokes s.Lookup and normalizes any error to *MissingSymbolError.
-func Lookup(s Symbols, name string) (interface{}, error) {
+func Lookup(p Plugin, name string) (interface{}, error) {
 	var value reflect.Value
-	symbol, err := s.Lookup(name)
+	symbol, err := p.Lookup(name)
 	if err == nil {
 		value = reflect.ValueOf(symbol)
 	} else {
