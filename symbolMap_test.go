@@ -1,14 +1,13 @@
 package pluginfx
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 )
 
 type SymbolMapSuite struct {
-	suite.Suite
+	PluginfxSuite
 }
 
 func (suite *SymbolMapSuite) TestSet() {
@@ -98,8 +97,7 @@ func (suite *SymbolMapSuite) TestDel() {
 
 		v, err := sm.Lookup("foo")
 		suite.Nil(v)
-		var mse *MissingSymbolError
-		suite.True(errors.As(err, &mse))
+		suite.missingSymbolError("foo", err)
 	})
 }
 
@@ -109,8 +107,7 @@ func (suite *SymbolMapSuite) TestLookup() {
 
 		v, err := sm.Lookup("foo")
 		suite.Nil(v)
-		var mse *MissingSymbolError
-		suite.True(errors.As(err, &mse))
+		suite.missingSymbolError("foo", err)
 	})
 
 	suite.Run("Found", func() {
@@ -129,8 +126,7 @@ func (suite *SymbolMapSuite) TestLookup() {
 
 		v, err := sm.Lookup("bar")
 		suite.Nil(v)
-		var mse *MissingSymbolError
-		suite.True(errors.As(err, &mse))
+		suite.missingSymbolError("bar", err)
 	})
 }
 
@@ -141,9 +137,7 @@ func (suite *SymbolMapSuite) TestNewSymbolMap() {
 
 		v, err := sm.Lookup("nosuch")
 		suite.Nil(v)
-
-		var mse *MissingSymbolError
-		suite.True(errors.As(err, &mse))
+		suite.missingSymbolError("nosuch", err)
 	})
 
 	suite.Run("NotNil", func() {
@@ -173,8 +167,7 @@ func (suite *SymbolMapSuite) TestNewSymbolMap() {
 
 		v, err = sm.Lookup("nosuch")
 		suite.Nil(v)
-		var mse *MissingSymbolError
-		suite.True(errors.As(err, &mse))
+		suite.missingSymbolError("nosuch", err)
 	})
 }
 
