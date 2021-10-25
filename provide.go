@@ -23,14 +23,10 @@ type P struct {
 	// Path is the plugin's path.  This field is required.
 	Path string
 
-	// Constructors are the optional exported functions from the plugin that participate
-	// in dependency injection.  Each constructor is passed to fx.Provide.
-	//
-	// Each element of this slice must either by a string or an Annotated.  If a string,
-	// it is the name of a function within the plugin.  If an Annotated, the Annotated.Constructor
-	// field is the symbol and the Name and Group fields give control over how
-	// the constructor's product is placed into the enclosing fx.App.
-	Constructors Constructors
+	// Symbols describes the optional set of functions exported by the plugin to be
+	// bound to the enclosing fx.App.  Both provide and invoke functions can be defined
+	// using this field.
+	Symbols Symbols
 
 	// Lifecycle is the optional binding from a plugin's symbols to the enclosing
 	// application.
@@ -56,7 +52,7 @@ func (p P) Provide() fx.Option {
 	plugin, err := Open(p.Path)
 
 	if err == nil {
-		options = append(options, p.Constructors.Provide(plugin))
+		options = append(options, p.Symbols.Load(plugin))
 		options = append(options, p.Lifecycle.Provide(plugin))
 	}
 
@@ -97,7 +93,7 @@ type S struct {
 	// Paths are the plugin paths to load.
 	Paths []string
 
-	Constructors Constructors
+	Symbols Symbols
 
 	Lifecycle Lifecycle
 }
@@ -114,8 +110,8 @@ func (s S) Provide() fx.Option {
 				Anonymous: len(s.Group) == 0,
 				Path:      path,
 
-				Constructors: s.Constructors,
-				Lifecycle:    s.Lifecycle,
+				Symbols:   s.Symbols,
+				Lifecycle: s.Lifecycle,
 			}.Provide(),
 		)
 	}
