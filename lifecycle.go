@@ -19,23 +19,7 @@ func (ile *InvalidLifecycleError) Error() string {
 	return fmt.Sprintf("Symbol %s of type %T is not a valid lifecycle callback", ile.Name, ile.Type)
 }
 
-// LookupLifecycle loads a symbol that is assumed to be a lifecycle callback
-// for fx.Lifecycle, either OnStart or OnStop.
-//
-// The symbol must be a function with one of several signatures:
-//
-//   - func()
-//   - func() error
-//   - func(context.Context)
-//   - func(context.Context) error
-//
-// Any of those signatures will be converted as necessary to what is required
-// by fx.Hook.
-//
-// This function returns a *MissingSymbolError if name was not found.
-// It returns *InvalidLifecycleError if the symbol was not a function with
-// one of the above signatures.
-func LookupLifecycle(s Plugin, name string) (func(context.Context) error, error) {
+func lookupLifecycle(s Plugin, name string) (func(context.Context) error, error) {
 	var callback func(context.Context) error
 	symbol, err := Lookup(s, name)
 
@@ -67,9 +51,22 @@ func LookupLifecycle(s Plugin, name string) (func(context.Context) error, error)
 // Lifecycle describes how to bind a plugin to an enclosing application's lifecycle.
 type Lifecycle struct {
 	// OnStart is the optional symbol name of a function that can be invoked on application startup.
+	//
+	// This field must refer to an exported function in the plugin that has any of the following
+	// signatures:
+	//
+	//   - func()
+	//   - func() error
+	//   - func(context.Context)
+	//   - func(context.Context) error
+	//
+	// A function with any of those signatures will be registered as an fx.Hook and will run
+	// on application startup.  Any other signature or non-function type will shortcircuit
+	// the application with an error.
 	OnStart string
 
 	// OnStop is the optional symbol name of a function that can be invoked on application shutdown.
+	// The symbol referred to by this field may have any of the same function signatures as OnStart.
 	OnStop string
 
 	// IgnoreMissing defines what happens when either OnStart or OnStop are set and not present.
@@ -86,7 +83,7 @@ func (lc Lifecycle) Provide(p Plugin) fx.Option {
 
 	if len(lc.OnStart) > 0 {
 		var err error
-		hook.OnStart, err = LookupLifecycle(p, lc.OnStart)
+		hook.OnStart, err = lookupLifecycle(p, lc.OnStart)
 		missing := IsMissingSymbolError(err)
 		if (missing && !lc.IgnoreMissing) || (!missing && err != nil) {
 			options = append(options, fx.Error(err))
@@ -95,7 +92,7 @@ func (lc Lifecycle) Provide(p Plugin) fx.Option {
 
 	if len(lc.OnStop) > 0 {
 		var err error
-		hook.OnStop, err = LookupLifecycle(p, lc.OnStop)
+		hook.OnStop, err = lookupLifecycle(p, lc.OnStop)
 		missing := IsMissingSymbolError(err)
 		if (missing && !lc.IgnoreMissing) || (!missing && err != nil) {
 			options = append(options, fx.Error(err))
