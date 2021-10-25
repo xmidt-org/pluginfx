@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Support for symbol defaults and searching over multiple plugins
 - Improved support for constructors and targets
 - SymbolMap encapsulates its internal map
+- Support loading invoke functions
 
 ## [v0.0.1]
 - Initial creation
