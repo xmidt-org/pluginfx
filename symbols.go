@@ -7,6 +7,9 @@ import (
 	"go.uber.org/fx"
 )
 
+// errType is the "cached" reflection type for error.
+var errType = reflect.TypeOf((*error)(nil)).Elem()
+
 // InvalidTargetError indicates that a type was not valid for the
 // fx.Annotated.Target field.  This is more restrictive than a constructor.
 // Targets must return exactly (1) non-error object, with an optional error.
