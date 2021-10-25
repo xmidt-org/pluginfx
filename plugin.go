@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"plugin"
-	"reflect"
 )
 
 // Plugin defines the behavior of something that can look up
@@ -77,11 +76,8 @@ func IsMissingSymbolError(err error) bool {
 
 // Lookup invokes s.Lookup and normalizes any error to *MissingSymbolError.
 func Lookup(p Plugin, name string) (interface{}, error) {
-	var value reflect.Value
 	symbol, err := p.Lookup(name)
-	if err == nil {
-		value = reflect.ValueOf(symbol)
-	} else {
+	if err != nil {
 		var msError *MissingSymbolError
 		if !errors.As(err, &msError) {
 			err = &MissingSymbolError{
@@ -91,5 +87,5 @@ func Lookup(p Plugin, name string) (interface{}, error) {
 		}
 	}
 
-	return value, err
+	return symbol, err
 }

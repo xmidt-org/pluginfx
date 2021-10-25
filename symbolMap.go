@@ -22,11 +22,11 @@ type SymbolMap struct {
 // to this map.
 func (sm *SymbolMap) Set(name string, value interface{}) {
 	vv := reflect.ValueOf(value)
-	if vv.Kind() == reflect.Ptr {
-		if vv.IsNil() {
-			panic("pluginfx.SymbolMap: A symbol must be either a function or a non-nil pointer")
-		}
-	} else if vv.Kind() != reflect.Func {
+	if !vv.IsValid() || (vv.Kind() == reflect.Ptr && vv.IsNil()) {
+		panic("pluginfx.SymbolMap: A symbol must be either a function or a non-nil pointer")
+	}
+
+	if vv.Kind() != reflect.Func && vv.Kind() != reflect.Ptr {
 		newValue := reflect.New(vv.Type())
 		newValue.Elem().Set(vv)
 		value = newValue.Interface()
