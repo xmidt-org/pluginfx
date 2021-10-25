@@ -3,15 +3,13 @@ package pluginfx
 import (
 	"testing"
 
-	"go.uber.org/fx"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestIt(t *testing.T) {
-	app := fx.New(
-		fx.Provide(
-			func() (error, int) { return nil, 1 },
-		),
-	)
+type PluginSuite struct {
+	suite.Suite
+}
 
-	t.Log(app.Err())
+func TestPlugin(t *testing.T) {
+	suite.Run(t, new(PluginSuite))
 }
