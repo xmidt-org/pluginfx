@@ -3,6 +3,7 @@ package pluginfx
 import (
 	"context"
 	"fmt"
+	"plugin"
 	"reflect"
 
 	"go.uber.org/fx"
@@ -19,9 +20,9 @@ func (ile *InvalidLifecycleError) Error() string {
 	return fmt.Sprintf("Symbol %s of type %T is not a valid lifecycle callback", ile.Name, ile.Type)
 }
 
-func lookupLifecycle(s Plugin, name string) (func(context.Context) error, error) {
-	var callback func(context.Context) error
-	symbol, err := Lookup(s, name)
+func lookupLifecycle(s Plugin, name string) (callback func(context.Context) error, err error) {
+	var symbol plugin.Symbol
+	symbol, err = Lookup(s, name)
 
 	if err == nil {
 		switch f := symbol.(type) {
@@ -45,7 +46,7 @@ func lookupLifecycle(s Plugin, name string) (func(context.Context) error, error)
 		}
 	}
 
-	return callback, err
+	return
 }
 
 // Lifecycle describes how to bind a plugin to an enclosing application's lifecycle.
