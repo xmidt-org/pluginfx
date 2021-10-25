@@ -68,6 +68,8 @@ func (mse *MissingSymbolError) Error() string {
 }
 
 // IsMissingSymbolError tests err to see if it is a *MissingSymbolError.
+// This function is a shorthand for situations where calling code only needs
+// to be aware that an error indicated a symbol was missing.
 func IsMissingSymbolError(err error) bool {
 	var mse *MissingSymbolError
 	return errors.As(err, &mse)

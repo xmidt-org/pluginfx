@@ -53,18 +53,6 @@ func LookupConstructor(p Plugin, name string) (value reflect.Value, err error) {
 	return
 }
 
-// InvalidTargetError indicates that a type was not valid for the
-// fx.Annotated.Target field.  This is more restrictive than a constructor.
-// Targets must return exactly (1) non-error object, with an optional error.
-type InvalidTargetError struct {
-	Name string
-	Type reflect.Type
-}
-
-func (ite *InvalidTargetError) Error() string {
-	return fmt.Sprintf("Symbol %s of type %T is not a valid target", ite.Name, ite.Type)
-}
-
 // LookupTarget locates a symbol that is valid for the fx.Annotated.Target field.
 // A Target is a Constructor with an additional constraint:  it my only return exactly
 // (1) non-error object and my optionally return an error in addition.
@@ -95,23 +83,6 @@ func LookupTarget(s Plugin, name string) (value reflect.Value, err error) {
 	}
 
 	return
-}
-
-// Annotated is an analog of fx.Annotated for plugin symbols.  This type
-// gives more control over how a plugin constructor gets placed into
-// the enclosing fx.App.
-type Annotated struct {
-	// Name is the optional name of the component emitted by the Constructor.
-	// Either Name or Group must be set, or an error is raised.
-	Name string
-
-	// Group is the value group for the component emitted by the Constructor.
-	// Either Name or Group must be set, or an error is raised.
-	Group string
-
-	// Target is the name of a function symbol that must be legal to
-	// use with fx.Annotated.Target.
-	Target string
 }
 
 // Constructors holds information about symbols within a plugin that are to
