@@ -53,7 +53,7 @@ func (p P) Provide() fx.Option {
 
 	if err == nil {
 		options = append(options, p.Symbols.Load(plugin))
-		options = append(options, p.Lifecycle.Provide(plugin))
+		options = append(options, p.Lifecycle.Bind(plugin))
 	}
 
 	// emit the plugin as a component if desired, even when there's an error.
