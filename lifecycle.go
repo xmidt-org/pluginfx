@@ -76,7 +76,9 @@ type Lifecycle struct {
 	IgnoreMissing bool
 }
 
-func (lc Lifecycle) Provide(p Plugin) fx.Option {
+// Bind binds the given plugin to the enclosing application's lifecycle, using
+// the symbol information configured in OnStart and OnStop.
+func (lc Lifecycle) Bind(p Plugin) fx.Option {
 	var (
 		hook    fx.Hook
 		options []fx.Option
