@@ -40,11 +40,16 @@ type P struct {
 //
 //   app := fx.New(
 //     pluginx.P{
+//       Anonymous: true, // leave unset if you want the plugin accessible via DI
 //       Path: "/etc/lib/something.so",
-//       Constructors: pluginfx.Constructors {
+//       Symbols: pluginfx.Symbols {
+//         Names: []interface{}{
+//           "MyConstructor",
+//         },
 //       },
-//       OnStart: "Initialize",
-//       /* other fields filled out as desired */
+//       Lifecycle: pluginfx.Lifecycle {
+//         OnStart: "Initialize",
+//       },
 //     }.Provide()
 //   )
 func (p P) Provide() fx.Option {
