@@ -23,7 +23,37 @@ func (suite *ProvideSuite) testPGlobal() {
 		app = fxtest.New(
 			suite.T(),
 			P{
-				Path: "./sample.so",
+				Path: samplePath,
+				Symbols: Symbols{
+					Names: []interface{}{
+						"New",
+					},
+				},
+				Lifecycle: Lifecycle{
+					OnStart: "Initialize",
+					OnStop:  "Shutdown",
+				},
+			}.Provide(),
+			fx.Populate(&value, &p),
+		)
+	)
+
+	app.RequireStart()
+	app.RequireStop()
+
+	suite.Equal(expectedNewValue, value)
+	suite.NotNil(p)
+}
+
+func (suite *ProvideSuite) testPExpandEnv() {
+	var (
+		value float64
+		p     Plugin
+
+		app = fxtest.New(
+			suite.T(),
+			P{
+				Path: "${PWD}/" + samplePath,
 				Symbols: Symbols{
 					Names: []interface{}{
 						"New",
@@ -54,7 +84,7 @@ func (suite *ProvideSuite) testPAnonymous() {
 			P{
 				Anonymous: true,
 				Name:      "ShouldBeIgnored",
-				Path:      "./sample.so",
+				Path:      samplePath,
 				Symbols: Symbols{
 					Names: []interface{}{
 						"New",
@@ -91,7 +121,7 @@ func (suite *ProvideSuite) testPNamed() {
 			suite.T(),
 			P{
 				Name: "MyPlugin",
-				Path: "./sample.so",
+				Path: samplePath,
 				Symbols: Symbols{
 					Names: []interface{}{
 						"New",
@@ -127,7 +157,7 @@ func (suite *ProvideSuite) testPGroup() {
 			suite.T(),
 			P{
 				Group: "plugins",
-				Path:  "./sample.so",
+				Path:  samplePath,
 				Symbols: Symbols{
 					Names: []interface{}{
 						"New",
@@ -176,6 +206,7 @@ func (suite *ProvideSuite) testPAnonymousError() {
 
 func (suite *ProvideSuite) TestP() {
 	suite.Run("Global", suite.testPGlobal)
+	suite.Run("ExpandEnv", suite.testPExpandEnv)
 	suite.Run("Anonymous", suite.testPAnonymous)
 	suite.Run("Named", suite.testPNamed)
 	suite.Run("Group", suite.testPGroup)
