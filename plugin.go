@@ -78,8 +78,8 @@ func IsMissingSymbolError(err error) bool {
 func Lookup(p Plugin, name string) (interface{}, error) {
 	symbol, err := p.Lookup(name)
 	if err != nil {
-		var msError *MissingSymbolError
-		if !errors.As(err, &msError) {
+		var mse *MissingSymbolError
+		if !errors.As(err, &mse) {
 			err = &MissingSymbolError{
 				Name: name,
 				Err:  err,
