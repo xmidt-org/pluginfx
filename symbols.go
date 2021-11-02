@@ -98,7 +98,7 @@ func (s Symbols) constructorOrInvoke(v reflect.Value, o []fx.Option) []fx.Option
 func (s Symbols) target(a Annotated, v reflect.Value, o []fx.Option) []fx.Option {
 	vt := v.Type()
 	switch {
-	case vt.NumOut() < 1 || vt.NumOut() > 3:
+	case vt.NumOut() < 1 || vt.NumOut() > 2:
 		fallthrough
 
 	case vt.NumOut() == 1 && vt.Out(0) == errType:

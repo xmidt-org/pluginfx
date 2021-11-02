@@ -171,6 +171,53 @@ func (suite *SymbolMapSuite) TestNewSymbolMap() {
 	})
 }
 
+func (suite *SymbolMapSuite) TestNewSymbols() {
+	suite.Run("Empty", func() {
+		sm := NewSymbols()
+		suite.Require().NotNil(sm)
+
+		v, err := sm.Lookup("nosuch")
+		suite.Nil(v)
+		suite.missingSymbolError("nosuch", err)
+	})
+
+	suite.Run("InvalidNumberOfParameters", func() {
+		suite.Panics(func() {
+			NewSymbols("bad")
+		})
+	})
+
+	suite.Run("NotEmpty", func() {
+		var (
+			called bool
+			sm     = NewSymbols(
+				"foo", 123,
+				"bar", func() {
+					called = true
+				},
+			)
+		)
+
+		suite.Require().NotNil(sm)
+
+		v, err := sm.Lookup("foo")
+		suite.Require().NoError(err)
+		suite.Require().NotNil(v)
+		suite.Equal(123, *v.(*int))
+
+		v, err = sm.Lookup("bar")
+		suite.Require().NoError(err)
+		suite.Require().NotNil(v)
+
+		v.(func())()
+		suite.True(called)
+
+		v, err = sm.Lookup("nosuch")
+		suite.Nil(v)
+		suite.missingSymbolError("nosuch", err)
+	})
+}
+
 func TestSymbolMap(t *testing.T) {
 	suite.Run(t, new(SymbolMapSuite))
 }

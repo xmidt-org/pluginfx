@@ -69,3 +69,28 @@ func NewSymbolMap(m map[string]interface{}) *SymbolMap {
 
 	return sm
 }
+
+// NewSymbols is like NewSymbolMap, but it uses a sequence of name/value
+// pairs.  This function is often easier to use than NewSymbolMap, due to
+// the noisiness of declaring a map.
+//
+// This function panics if namesAndValues is not empty and does not have
+// an even number of elements.  It also panics if any even-numbered element (including zero)
+// is not a string.
+func NewSymbols(namesAndValues ...interface{}) *SymbolMap {
+	count := len(namesAndValues)
+	if count%2 != 0 {
+		panic("NewSymbols: an even number of elements is required")
+	}
+
+	sm := &SymbolMap{
+		symbols: make(map[string]plugin.Symbol, count/2),
+	}
+
+	for i, j := 0, 1; i < count; i, j = i+2, j+2 {
+		name := namesAndValues[i].(string)
+		sm.Set(name, namesAndValues[j])
+	}
+
+	return sm
+}
