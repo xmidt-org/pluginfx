@@ -2,6 +2,7 @@ package pluginfx
 
 import (
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -211,6 +212,127 @@ func (suite *ProvideSuite) TestP() {
 	suite.Run("Named", suite.testPNamed)
 	suite.Run("Group", suite.testPGroup)
 	suite.Run("AnonymousError", suite.testPAnonymousError)
+}
+
+func (suite *ProvideSuite) testSAnonymous() {
+	var (
+		value float64
+
+		app = fxtest.New(
+			suite.T(),
+			S{
+				Paths: []string{samplePath},
+				Symbols: Symbols{
+					Names: []interface{}{
+						"New",
+					},
+				},
+				Lifecycle: Lifecycle{
+					OnStart: "Initialize",
+					OnStop:  "Shutdown",
+				},
+			}.Provide(),
+			fx.Populate(&value),
+		)
+	)
+
+	app.RequireStart()
+	app.RequireStop()
+
+	suite.Equal(expectedNewValue, value)
+}
+
+func (suite *ProvideSuite) testSGroup() {
+	var (
+		value float64
+
+		app = fxtest.New(
+			suite.T(),
+			S{
+				Group: "plugins",
+				Paths: []string{samplePath},
+				Symbols: Symbols{
+					Names: []interface{}{
+						"New",
+					},
+				},
+				Lifecycle: Lifecycle{
+					OnStart: "Initialize",
+					OnStop:  "Shutdown",
+				},
+			}.Provide(),
+			fx.Populate(&value),
+			fx.Invoke(
+				func(in struct {
+					fx.In
+					Plugins []Plugin `group:"plugins"`
+				}) {
+					suite.Len(in.Plugins, 1)
+				},
+			),
+		)
+	)
+
+	app.RequireStart()
+	app.RequireStop()
+
+	suite.Equal(expectedNewValue, value)
+}
+
+func (suite *ProvideSuite) testSExpandEnv() {
+	var (
+		value float64
+
+		app = fxtest.New(
+			suite.T(),
+			S{
+				Group: "plugins",
+				Paths: []string{"${PWD}/*.so"},
+				Symbols: Symbols{
+					Names: []interface{}{
+						"New",
+					},
+				},
+				Lifecycle: Lifecycle{
+					OnStart: "Initialize",
+					OnStop:  "Shutdown",
+				},
+			}.Provide(),
+			fx.Populate(&value),
+			fx.Invoke(
+				func(in struct {
+					fx.In
+					Plugins []Plugin `group:"plugins"`
+				}) {
+					suite.Len(in.Plugins, 1)
+				},
+			),
+		)
+	)
+
+	app.RequireStart()
+	app.RequireStop()
+
+	suite.Equal(expectedNewValue, value)
+}
+
+func (suite *ProvideSuite) testSBadGlob() {
+	app := fx.New(
+		S{
+			Paths: []string{"["},
+		}.Provide(),
+	)
+
+	err := app.Err()
+	suite.Require().Error(err)
+	suite.True(errors.Is(err, filepath.ErrBadPattern))
+}
+
+func (suite *ProvideSuite) TestS() {
+	suite.Run("Anonymous", suite.testSAnonymous)
+	suite.Run("Group", suite.testSGroup)
+	suite.Run("ExpandEnv", suite.testSExpandEnv)
+	suite.Run("BadGlob", suite.testSBadGlob)
 }
 
 func TestProvide(t *testing.T) {
