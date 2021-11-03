@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Improved support for constructors and targets
 - SymbolMap encapsulates its internal map
 - Support loading invoke functions
+- Support filesystem globbing to load multiple plugins
+- os.ExpandEnv all plugin paths prior to opening
 
 ## [v0.0.1]
 - Initial creation
