@@ -42,20 +42,20 @@ type P struct {
 //
 // Typical usage:
 //
-//   app := fx.New(
-//     pluginx.P{
-//       Anonymous: true, // leave unset if you want the plugin accessible via DI
-//       Path: "/etc/lib/something.so",
-//       Symbols: pluginfx.Symbols {
-//         Names: []interface{}{
-//           "MyConstructor",
-//         },
-//       },
-//       Lifecycle: pluginfx.Lifecycle {
-//         OnStart: "Initialize",
-//       },
-//     }.Provide()
-//   )
+//	app := fx.New(
+//	  pluginx.P{
+//	    Anonymous: true, // leave unset if you want the plugin accessible via DI
+//	    Path: "/etc/lib/something.so",
+//	    Symbols: pluginfx.Symbols {
+//	      Names: []interface{}{
+//	        "MyConstructor",
+//	      },
+//	    },
+//	    Lifecycle: pluginfx.Lifecycle {
+//	      OnStart: "Initialize",
+//	    },
+//	  }.Provide()
+//	)
 func (p P) Provide() fx.Option {
 	var options []fx.Option
 	plugin, err := Open(os.ExpandEnv(p.Path))
