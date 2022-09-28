@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/stretchr/testify v1.8.0
-	go.uber.org/fx v1.18.1
+	go.uber.org/fx v1.18.2
 )
 
 require (
